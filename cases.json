@@ -1,0 +1,593 @@
+[
+  {
+    "id": "npm-next-async-cookies",
+    "kind": "npm",
+    "name": "next",
+    "installSpec": "16.4.2",
+    "language": "ts",
+    "changeDate": "2025-10-21",
+    "sourceUrl": "https://nextjs.org/docs/app/guides/upgrading/version-16#async-request-apis-breaking-change",
+    "change": "Next.js 16 removed synchronous access to cookies() and the other request APIs, so the cookie store must now be awaited.",
+    "rule": "Always await cookies() from next/headers before reading values; synchronous access no longer works.",
+    "task": "Write a Next.js Server Action that reads the `session` cookie and returns its value, or null when the cookie is not set.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\bcookies\\(\\)\\s*\\.|=\\s*cookies\\(\\)",
+    "rightPattern": "\\bawait\\s+cookies\\(\\)(?!\\s*\\.)",
+    "verified": "next@16.4.2 dist/server/request/cookies.d.ts declares `cookies(): Promise<ReadonlyRequestCookies>` with no UnsafeUnwrapped sync overload; bundled dist/docs upgrading/version-16.md says synchronous access is fully removed. Blog date 2025-10-21 (npm 16.0.0 published 2025-10-22T00:12Z).",
+    "dependencyPins": {
+      "react": "19.3.1",
+      "react-dom": "19.3.1"
+    },
+    "samples": {
+      "wrong": [
+        "'use server'\nimport { cookies } from 'next/headers'\nexport async function getSession() {\n  return cookies().get('session')?.value ?? null\n}",
+        "'use server'\nimport { cookies } from 'next/headers'\nexport async function getSession() {\n  const store = cookies()\n  return store.get('session')?.value ?? null\n}",
+        "'use server'\nimport { cookies } from 'next/headers'\nexport async function getSession() {\n  const v = await cookies().get('session')\n  return v?.value ?? null\n}"
+      ],
+      "right": [
+        "'use server'\nimport { cookies } from 'next/headers'\nexport async function getSession() {\n  const store = await cookies()\n  return store.get('session')?.value ?? null\n}",
+        "'use server'\nimport { cookies } from 'next/headers'\nexport async function getSession() {\n  return (await cookies()).get('session')?.value ?? null\n}",
+        "'use server'\nimport { cookies as c } from 'next/headers'\nimport { cookies } from 'next/headers'\nexport const getSession = async () => {\n  const jar = await cookies();\n  return jar.get('session')?.value ?? null;\n};"
+      ]
+    }
+  },
+  {
+    "id": "npm-vite-server-ws",
+    "kind": "npm",
+    "name": "vite",
+    "installSpec": "8.3.4",
+    "language": "ts",
+    "changeDate": "2026-06-23",
+    "sourceUrl": "https://vite.dev/config/server-options#server-hmr",
+    "change": "Vite 8.1 deprecated the WebSocket connection options under server.hmr in favor of the new server.ws option.",
+    "rule": "Configure dev-server WebSocket connection options under server.ws; protocol, host, port and clientPort under server.hmr are deprecated.",
+    "task": "Write a Vite config as the default export for a dev server behind a TLS reverse proxy, so the browser's live-reload connection goes to `dev.example.com` on port 443 over wss.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\bhmr\\s*:\\s*\\{[^{}]*\\b(?:protocol|host|port|clientPort|path|timeout|server)\\s*:",
+    "rightPattern": "\\bws\\s*:\\s*\\{[^{}]*\\b(?:protocol|host|port|clientPort|path|timeout|server)\\s*:",
+    "verified": "vite@8.3.4 dist/node/index.d.ts: HmrOptions.protocol/host/port/clientPort/path/timeout/server each tagged `@deprecated Use server.ws.* instead`, and interface WsOptions exists. Present since 8.1.0; CHANGELOG 8.1.0 (2026-06-23): 'rename server.hmr options to server.ws options (#21357)'. Config docs: 'are deprecated. Use server.ws instead. These options are automatically synced, so existing configurations will continue to work.'",
+    "samples": {
+      "wrong": [
+        "import { defineConfig } from 'vite'\nexport default defineConfig({\n  server: { hmr: { protocol: 'wss', host: 'dev.example.com', clientPort: 443 } },\n})",
+        "export default {\n  server: {\n    hmr: {\n      host: 'dev.example.com',\n      port: 443,\n      protocol: 'wss',\n    },\n  },\n}",
+        "export default { server: { hmr: { overlay: false, clientPort: 443, protocol: 'wss' } } }"
+      ],
+      "right": [
+        "import { defineConfig } from 'vite'\nexport default defineConfig({\n  server: { ws: { protocol: 'wss', host: 'dev.example.com', clientPort: 443 } },\n})",
+        "export default {\n  server: {\n    ws: {\n      host: 'dev.example.com',\n      port: 443,\n      protocol: 'wss',\n    },\n  },\n}",
+        "export default { server: { hmr: { overlay: false }, ws: { clientPort: 443, protocol: 'wss', host: 'dev.example.com' } } }"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "npm-tailwindcss-inset-logical",
+    "kind": "npm",
+    "name": "tailwindcss",
+    "installSpec": "4.3.3",
+    "language": "ts",
+    "changeDate": "2026-02-18",
+    "sourceUrl": "https://github.com/tailwindlabs/tailwindcss/blob/main/CHANGELOG.md",
+    "change": "Tailwind CSS 4.2.0 deprecated the start-* and end-* utilities in favor of inset-s-* and inset-e-*.",
+    "rule": "Use inset-s-* and inset-e-* for logical inline positioning; the start-* and end-* utilities are deprecated.",
+    "task": "Write a TypeScript function that returns the Tailwind class string for an absolutely positioned close button, 1rem from the top and 1rem from the trailing edge of its card, so it flips sides automatically in right-to-left layouts.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "(?<![\\w-])-?(?:start|end)-(?:\\d|px\\b|\\[|\\(|auto\\b|full\\b)",
+    "rightPattern": "(?<![\\w-])-?inset-[se]-",
+    "verified": "CHANGELOG 4.2.0 (2026-02-18), section Deprecated: 'Deprecate start-* and end-* utilities in favor of inset-s-* and inset-e-*' (#19613). tailwindcss@4.3.3 dist/lib.js registers inset-s and inset-e and still registers end (deprecated, not removed).",
+    "samples": {
+      "wrong": [
+        "export const closeButton = () => 'absolute top-4 end-4 p-2'",
+        "export function cls(): string { return 'absolute top-4 md:end-4' }",
+        "export const closeButton = () => 'absolute top-4 end-[1rem] rounded'"
+      ],
+      "right": [
+        "export const closeButton = () => 'absolute top-4 inset-e-4 p-2'",
+        "export function cls(): string { return 'absolute top-4 md:inset-e-4' }",
+        "export const closeButton = () => 'absolute top-4 inset-e-[1rem] justify-end rounded'"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "npm-zod-cuid2",
+    "kind": "npm",
+    "name": "zod",
+    "installSpec": "4.6.7",
+    "language": "ts",
+    "changeDate": "2026-04-29",
+    "sourceUrl": "https://github.com/colinhacks/zod/releases/tag/v4.4.0",
+    "change": "Zod 4.4.0 deprecated CUID v1 validation with z.cuid() in favor of z.cuid2().",
+    "rule": "Validate CUID-format ids with z.cuid2(); z.cuid() is deprecated.",
+    "task": "Write a Zod schema for an `Order` with a numeric `total` and an `id` holding the collision-resistant identifiers from the paralleldrive library; use Zod's built-in format validator for `id`, not a custom regex.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\.cuid\\s*\\(",
+    "rightPattern": "\\bz\\.cuid2\\s*\\(",
+    "verified": "zod@4.6.7 v4/classic/schemas.d.ts: `cuid()` is `@deprecated ... Use z.cuid2() instead`; `export declare function cuid2(...)` present. Release notes v4.4.0: 'CUID v1 is now deprecated' (#5880). The old function still exists.",
+    "samples": {
+      "wrong": [
+        "import { z } from 'zod'\nexport const Order = z.object({ id: z.cuid(), total: z.number() })",
+        "import { z } from 'zod'\nexport const Order = z.object({ id: z.string().cuid(), total: z.number() })",
+        "import * as z from 'zod'\nexport const Order = z.object({\n  id: z.cuid({ error: 'bad id' }),\n  total: z.number(),\n})"
+      ],
+      "right": [
+        "import { z } from 'zod'\nexport const Order = z.object({ id: z.cuid2(), total: z.number() })",
+        "import * as z from 'zod'\nexport const Order = z.object({\n  id: z.cuid2({ error: 'bad id' }),\n  total: z.number(),\n})",
+        "import { z } from 'zod'\nconst Id = z.cuid2()\nexport const Order = z.object({ id: Id, total: z.number() })"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "npm-prisma-driver-adapter",
+    "kind": "npm",
+    "name": "@prisma/client",
+    "installSpec": "7.10.1",
+    "language": "ts",
+    "changeDate": "2025-11-19",
+    "sourceUrl": "https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7",
+    "change": "Prisma ORM 7 removed the datasources and datasourceUrl client options and requires a driver adapter (or accelerateUrl) when constructing PrismaClient.",
+    "rule": "Construct PrismaClient with a driver adapter, as in new PrismaClient({ adapter }); never use datasourceUrl, datasources or an empty constructor.",
+    "task": "Write a module that creates and exports a Prisma Client connected to our Postgres database, using the connection string from the `DATABASE_URL` environment variable.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\bdatasourceUrl\\s*:|\\bdatasources\\s*:|\\bnew\\s+PrismaClient\\s*\\(\\s*\\)",
+    "rightPattern": "\\bnew\\s+PrismaClient\\s*\\(\\s*\\{[^}]*\\badapter\\b",
+    "verified": "@prisma/client@7.10.1 runtime/client.d.ts PrismaClientOptions has `adapter: SqlDriverAdapterFactory` / `accelerateUrl`, docs comment says a driver adapter is required; no datasourceUrl or datasources option remains. Upgrade guide shows the before/after. npm 7.0.0 published 2025-11-19.",
+    "dependencyPins": {
+      "@prisma/adapter-pg": "7.10.1",
+      "prisma": "7.10.1"
+    },
+    "samples": {
+      "wrong": [
+        "import { PrismaClient } from '@prisma/client'\nexport const prisma = new PrismaClient({ datasourceUrl: process.env.DATABASE_URL })",
+        "import { PrismaClient } from '@prisma/client'\nexport const prisma = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } })",
+        "import { PrismaClient } from '@prisma/client'\nexport const prisma = new PrismaClient()"
+      ],
+      "right": [
+        "import { PrismaClient } from './generated/prisma/client'\nimport { PrismaPg } from '@prisma/adapter-pg'\nconst adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })\nexport const prisma = new PrismaClient({ adapter })",
+        "import { PrismaClient } from '@prisma/client'\nimport { PrismaPg } from '@prisma/adapter-pg'\nexport const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) })",
+        "import { PrismaClient } from './generated/prisma/client'\nimport { PrismaPg } from '@prisma/adapter-pg'\nconst adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })\nexport const prisma = new PrismaClient({\n  log: ['error'],\n  adapter,\n})"
+      ]
+    }
+  },
+  {
+    "id": "npm-eslint-flat-config",
+    "kind": "npm",
+    "name": "eslint",
+    "installSpec": "10.13.0",
+    "language": "ts",
+    "changeDate": "2026-02-06",
+    "sourceUrl": "https://eslint.org/docs/latest/use/migrate-to-10.0.0#-old-config-format-no-longer-supported",
+    "change": "ESLint 10 removed support for the old eslintrc configuration format, leaving flat config as the only format.",
+    "rule": "Write ESLint configuration in flat format with defineConfig, files and languageOptions; eslintrc keys such as env, overrides and root no longer work.",
+    "task": "Write our ESLint configuration as the default export for a browser JavaScript project: enable the recommended rules, warn on console calls, and turn off no-unused-vars for files under `test/`.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\boverrides\\s*:|\\benv\\s*:\\s*\\{|\\broot\\s*:\\s*true|\\bextends\\s*:\\s*\\[?\\s*['\\\"]eslint:recommended",
+    "rightPattern": "\\bdefineConfig\\s*\\(|\\blanguageOptions\\s*:|\\bexport\\s+default\\s*\\[|\\bmodule\\.exports\\s*=\\s*\\[",
+    "verified": "eslint@10.13.0 lib/eslint/ contains only eslint.js, eslint-helpers.js, index.js, worker.js (no legacy-eslint.js) and lib/cli-engine/ no longer has cli-engine.js; package exports './config' -> lib/config-api.js exporting defineConfig. Migration guide section 'Old config format no longer supported'. Release v10.0.0 2026-02-06: 'feat!: remove eslintrc support (#20037)'.",
+    "dependencyPins": {
+      "@eslint/js": "10.0.1",
+      "globals": "17.13.0"
+    },
+    "samples": {
+      "wrong": [
+        "export default {\n  root: true,\n  env: { browser: true },\n  extends: ['eslint:recommended'],\n  rules: { 'no-console': 'warn' },\n}",
+        "module.exports = {\n  env: { browser: true, es2024: true },\n  rules: { 'no-console': 'warn' },\n  overrides: [{ files: ['test/**'], rules: { 'no-unused-vars': 'off' } }],\n}",
+        "export default {\n  extends: 'eslint:recommended',\n  rules: { 'no-console': 'warn' },\n}"
+      ],
+      "right": [
+        "import js from '@eslint/js'\nimport { defineConfig } from 'eslint/config'\nimport globals from 'globals'\nexport default defineConfig([\n  js.configs.recommended,\n  { languageOptions: { globals: globals.browser }, rules: { 'no-console': 'warn' } },\n  { files: ['test/**'], rules: { 'no-unused-vars': 'off' } },\n])",
+        "import js from '@eslint/js'\nimport globals from 'globals'\nexport default [\n  js.configs.recommended,\n  { languageOptions: { globals: globals.browser } },\n  { rules: { 'no-console': 'warn' } },\n]",
+        "import js from '@eslint/js'\nexport default [\n  js.configs.recommended,\n  { rules: { 'no-console': 'warn' } },\n  { files: ['test/**/*.js'], rules: { 'no-unused-vars': 'off' } },\n]"
+      ]
+    }
+  },
+  {
+    "id": "npm-openai-images-safety-identifier",
+    "kind": "npm",
+    "name": "openai",
+    "installSpec": "7.39.0",
+    "language": "ts",
+    "changeDate": "2026-10-16",
+    "sourceUrl": "https://github.com/openai/openai-node/releases/tag/v7.36.0",
+    "change": "OpenAI's Images API deprecated the user parameter in favor of safety_identifier for attributing requests to an end user.",
+    "rule": "Pass safety_identifier, not user, to identify end users in image generation requests.",
+    "task": "Using the official OpenAI Node SDK, write a function that generates an image from a prompt on behalf of a signed-in customer, and passes that customer's ID so abusive requests can be attributed to them.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\bimages\\s*\\.\\s*(?:generate|edit)\\s*\\(\\s*\\{[\\s\\S]{0,600}?\\buser\\s*[:,]",
+    "rightPattern": "\\bsafety_identifier\\s*:",
+    "verified": "openai@7.39.0 resources/images.d.ts: `user?: string` tagged `@deprecated Deprecated: use safety_identifier instead`; `safety_identifier?` present (5 hits). Absent in 7.35.0, present in 7.36.0. CHANGELOG 7.36.0 dated 2026-10-16 (GitHub release 2026-10-17T00:28Z UTC): 'add safety identifiers to image requests and responses'. Old param still accepted.",
+    "samples": {
+      "wrong": [
+        "import OpenAI from 'openai'\nconst client = new OpenAI()\nexport const gen = (prompt: string, customerId: string) =>\n  client.images.generate({ model: 'gpt-image-1', prompt, user: customerId })",
+        "import OpenAI from 'openai'\nconst client = new OpenAI()\nexport async function gen(prompt: string, id: string) {\n  return client.images.generate({\n    prompt,\n    user: id,\n  })\n}",
+        "import OpenAI from 'openai'\nconst openai = new OpenAI()\nexport async function gen(prompt: string, user: string) {\n  return openai.images.generate({ prompt, user, n: 1 })\n}"
+      ],
+      "right": [
+        "import OpenAI from 'openai'\nconst client = new OpenAI()\nexport const gen = (prompt: string, customerId: string) =>\n  client.images.generate({ model: 'gpt-image-1', prompt, safety_identifier: customerId })",
+        "import OpenAI from 'openai'\nconst client = new OpenAI()\nexport async function gen(prompt: string, id: string) {\n  return client.images.generate({\n    prompt,\n    safety_identifier: id,\n  })\n}",
+        "import OpenAI from 'openai'\nconst openai = new OpenAI()\nexport async function gen(prompt: string, user: { id: string }) {\n  return openai.images.generate({ prompt, safety_identifier: user.id, n: 1 })\n}"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "npm-anthropic-messages-over-completions",
+    "kind": "npm",
+    "name": "@anthropic-ai/sdk",
+    "installSpec": "0.137.0",
+    "language": "ts",
+    "changeDate": "2026-10-07",
+    "sourceUrl": "https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.132.0",
+    "change": "The Anthropic TypeScript SDK marked the Text Completions API as deprecated, pointing callers to the Messages API.",
+    "rule": "Generate text with client.messages.create; client.completions.create is deprecated.",
+    "task": "Using the Anthropic TypeScript SDK, write a function that sends a prompt string to Claude and returns the generated text as a string.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\.completions\\s*\\.\\s*create\\s*\\(",
+    "rightPattern": "\\.messages\\s*\\.\\s*(?:create|stream|parse)\\s*\\(",
+    "verified": "@anthropic-ai/sdk@0.137.0 resources/completions.d.ts: Completions.create carries `@deprecated Use the Messages API ... instead`; resources/messages/messages.d.ts present. CHANGELOG 0.132.0 (2026-10-07): 'api: mark the Text Completions API as deprecated'. Note: `latest` on npm is 1.4.0, released within the 14-day window, so it was not used.",
+    "samples": {
+      "wrong": [
+        "import Anthropic from '@anthropic-ai/sdk'\nconst client = new Anthropic()\nexport async function ask(p: string) {\n  const r = await client.completions.create({ model: 'claude-2.1', max_tokens_to_sample: 300, prompt: `\\n\\nHuman: ${p}\\n\\nAssistant:` })\n  return r.completion\n}",
+        "import Anthropic from '@anthropic-ai/sdk'\nconst anthropic = new Anthropic()\nexport const ask = async (prompt: string) => (await anthropic.completions.create({ model: 'claude-2.1', max_tokens_to_sample: 100, prompt })).completion",
+        "import Anthropic from '@anthropic-ai/sdk'\nexport async function ask(prompt: string) {\n  const c = new Anthropic()\n  const out = await c.completions\n    .create({ model: 'claude-2.1', max_tokens_to_sample: 100, prompt })\n  return out.completion\n}"
+      ],
+      "right": [
+        "import Anthropic from '@anthropic-ai/sdk'\nconst client = new Anthropic()\nexport async function ask(p: string) {\n  const r = await client.messages.create({ model: 'claude-sonnet-5-5', max_tokens: 300, messages: [{ role: 'user', content: p }] })\n  return r.content.flatMap(b => b.type === 'text' ? [b.text] : []).join('')\n}",
+        "import Anthropic from '@anthropic-ai/sdk'\nconst anthropic = new Anthropic()\nexport const ask = async (prompt: string) => {\n  const stream = anthropic.messages.stream({ model: 'claude-sonnet-5-5', max_tokens: 100, messages: [{ role: 'user', content: prompt }] })\n  return stream.finalText()\n}",
+        "import Anthropic from '@anthropic-ai/sdk'\nexport async function ask(prompt: string) {\n  const c = new Anthropic()\n  const m = await c.messages.create({ model: 'claude-haiku-5-5', max_tokens: 100, messages: [{ role: 'user', content: prompt }] })\n  return m.content[0].type === 'text' ? m.content[0].text : ''\n}"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "npm-ai-output-error-input",
+    "kind": "npm",
+    "name": "ai",
+    "installSpec": "7.0.147",
+    "language": "ts",
+    "changeDate": "2026-09-16",
+    "sourceUrl": "https://github.com/vercel/ai/releases/tag/ai%407.0.103",
+    "change": "The AI SDK deprecated rawInput on output-error UI message tool parts in favor of input.",
+    "rule": "Read a failed tool part's arguments from part.input; rawInput is deprecated.",
+    "task": "Write a TypeScript function that takes a `UIMessage` from the Vercel AI SDK and returns, for each tool part that failed, the tool call ID, the arguments the model passed to the tool, and the error text.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\brawInput\\b",
+    "rightPattern": "\\.input\\b|\\{[^{}]*\\binput\\b[^{}]*\\}\\s*=",
+    "verified": "ai@7.0.147 dist/index.d.ts, output-error state: `input: ... | undefined` plus `rawInput?: unknown` tagged `@deprecated Use input instead. This field will be removed in the next major version.` CHANGELOG 7.0.103: 'feat(ai): deprecate rawInput in output-error UI message parts'. npm 7.0.103 published 2026-09-16.",
+    "samples": {
+      "wrong": [
+        "import type { UIMessage } from 'ai'\nexport const failed = (m: UIMessage) => m.parts.flatMap((p: any) => p.state === 'output-error' ? [{ id: p.toolCallId, args: p.rawInput, error: p.errorText }] : [])",
+        "import type { UIMessage } from 'ai'\nexport function failed(m: UIMessage) {\n  return m.parts.filter((p: any) => p.state === 'output-error').map((p: any) => {\n    const { toolCallId, rawInput, errorText } = p\n    return { toolCallId, args: rawInput, errorText }\n  })\n}",
+        "export function failed(m: any) {\n  const out = []\n  for (const part of m.parts) {\n    if (part.state === 'output-error') out.push({ args: part['rawInput'], error: part.errorText })\n  }\n  return out\n}"
+      ],
+      "right": [
+        "import type { UIMessage } from 'ai'\nexport const failed = (m: UIMessage) => m.parts.flatMap((p: any) => p.state === 'output-error' ? [{ id: p.toolCallId, args: p.input, error: p.errorText }] : [])",
+        "import type { UIMessage } from 'ai'\nexport function failed(m: UIMessage) {\n  return m.parts.filter((p: any) => p.state === 'output-error').map((p: any) => {\n    const { toolCallId, input, errorText } = p\n    return { toolCallId, args: input, errorText }\n  })\n}",
+        "export function failed(m: any) {\n  const out = []\n  for (const part of m.parts) {\n    if (part.state === 'output-error') out.push({ args: part.input, error: part.errorText })\n  }\n  return out\n}"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "npm-mcp-sdk-expected-issuer",
+    "kind": "npm",
+    "name": "@modelcontextprotocol/sdk",
+    "installSpec": "1.32.1",
+    "language": "ts",
+    "changeDate": "2026-09-28",
+    "sourceUrl": "https://github.com/modelcontextprotocol/typescript-sdk/releases/tag/1.31.0",
+    "change": "MCP TypeScript SDK 1.31.0 deprecated constructing ClientCredentialsProvider and the private-key JWT providers without expectedIssuer.",
+    "rule": "Always pass expectedIssuer when constructing ClientCredentialsProvider.",
+    "task": "Write a TypeScript MCP client that connects to `https://mcp.example.com/mcp` over Streamable HTTP and authenticates machine-to-machine with an OAuth client ID and secret from environment variables; our authorization server is `https://auth.example.com`.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\bnew\\s+ClientCredentialsProvider\\s*\\(\\s*\\{(?:(?!expectedIssuer)[\\s\\S])*?\\}\\s*\\)",
+    "rightPattern": "\\bnew\\s+ClientCredentialsProvider\\s*\\(\\s*\\{(?:(?!\\}\\s*\\))[\\s\\S])*?\\bexpectedIssuer\\b",
+    "verified": "@modelcontextprotocol/sdk@1.32.1 dist/esm/client/auth-extensions.d.ts: constructor overload with required `expectedIssuer: string` plus `@deprecated Pass expectedIssuer so the credentials are only sent to that authorization server.` Release 1.31.0 upgrade notes state the deprecation. Old form still compiles.",
+    "samples": {
+      "wrong": [
+        "import { ClientCredentialsProvider } from '@modelcontextprotocol/sdk/client/auth-extensions.js'\nconst authProvider = new ClientCredentialsProvider({ clientId: process.env.ID!, clientSecret: process.env.SECRET! })",
+        "const authProvider = new ClientCredentialsProvider({\n  clientId: process.env.MCP_ID!,\n  clientSecret: process.env.MCP_SECRET!,\n  scope: 'tools',\n})",
+        "const p = new ClientCredentialsProvider({ clientId: id, clientSecret: secret })\nconst issuerUrl = 'https://auth.example.com'"
+      ],
+      "right": [
+        "import { ClientCredentialsProvider } from '@modelcontextprotocol/sdk/client/auth-extensions.js'\nconst authProvider = new ClientCredentialsProvider({ clientId: process.env.ID!, clientSecret: process.env.SECRET!, expectedIssuer: 'https://auth.example.com' })",
+        "const authProvider = new ClientCredentialsProvider({\n  expectedIssuer: 'https://auth.example.com',\n  clientId: process.env.MCP_ID!,\n  clientSecret: process.env.MCP_SECRET!,\n})",
+        "const expectedIssuer = 'https://auth.example.com'\nconst p = new ClientCredentialsProvider({ clientId: id, clientSecret: secret, expectedIssuer })"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "pypi-openai-images-safety-identifier",
+    "kind": "pypi",
+    "name": "openai",
+    "installSpec": "3.35.1",
+    "language": "py",
+    "changeDate": "2026-10-16",
+    "sourceUrl": "https://github.com/openai/openai-python/releases/tag/v3.33.0",
+    "change": "OpenAI's Images API deprecated the user parameter in favor of safety_identifier for attributing requests to an end user.",
+    "rule": "Pass safety_identifier, not user, to identify end users in image generation requests.",
+    "task": "Using the official OpenAI Python SDK, write a function that generates an image from a prompt on behalf of a signed-in customer, and passes that customer's ID so abusive requests can be attributed to them.",
+    "outputFile": "task.py",
+    "wrongPattern": "\\bimages\\s*\\.\\s*(?:generate|edit)\\s*\\([\\s\\S]{0,600}?\\buser\\s*=",
+    "rightPattern": "\\bsafety_identifier\\s*=",
+    "verified": "openai==3.35.1 wheel openai/types/image_generate_params.py: `safety_identifier: Optional[str]` and a `user` field documented 'Deprecated: use safety_identifier instead'. CHANGELOG 3.33.0 dated 2026-10-16 (GitHub release 2026-10-17T00:29Z UTC). Old param still accepted.",
+    "samples": {
+      "wrong": [
+        "from openai import OpenAI\nclient = OpenAI()\ndef gen(prompt, customer_id):\n    return client.images.generate(model='gpt-image-1', prompt=prompt, user=customer_id)",
+        "from openai import OpenAI\nclient = OpenAI()\ndef gen(prompt, customer_id):\n    return client.images.generate(\n        prompt=prompt,\n        user=customer_id,\n    )",
+        "import openai\nclient = openai.OpenAI()\ndef gen(prompt: str, user: str):\n    return client.images.generate(prompt=prompt, n=1, user=user)"
+      ],
+      "right": [
+        "from openai import OpenAI\nclient = OpenAI()\ndef gen(prompt, customer_id):\n    return client.images.generate(model='gpt-image-1', prompt=prompt, safety_identifier=customer_id)",
+        "from openai import OpenAI\nclient = OpenAI()\ndef gen(prompt, customer_id):\n    return client.images.generate(\n        prompt=prompt,\n        safety_identifier=customer_id,\n    )",
+        "import openai\nclient = openai.OpenAI()\ndef gen(prompt: str, user_id: str):\n    return client.images.generate(prompt=prompt, n=1, safety_identifier=user_id)"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "pypi-pydantic-after-validator-instance",
+    "kind": "pypi",
+    "name": "pydantic",
+    "installSpec": "2.14.1",
+    "language": "py",
+    "changeDate": "2025-10-07",
+    "sourceUrl": "https://github.com/pydantic/pydantic/blob/main/HISTORY.md",
+    "change": "Pydantic 2.12 deprecated defining mode='after' model validators as classmethods; they must be instance methods.",
+    "rule": "Write mode='after' model validators as instance methods taking self and returning self, never as classmethods.",
+    "task": "Write a Pydantic model `DateRange` with `start` and `end` dates, plus a model-level validator that runs after field validation and rejects ranges where `end` is before `start`.",
+    "outputFile": "task.py",
+    "wrongPattern": "model_validator\\(\\s*mode\\s*=\\s*['\\\"]after['\\\"]\\s*\\)\\s*@classmethod",
+    "rightPattern": "model_validator\\(\\s*mode\\s*=\\s*['\\\"]after['\\\"]\\s*\\)\\s*def\\s+\\w+\\s*\\(\\s*self\\b",
+    "verified": "pydantic==2.14.1 wheel pydantic/functional_validators.py warns PydanticDeprecatedSince212: \"Using @model_validator with mode='after' on a classmethod is deprecated. Instead, use an instance method.\" HISTORY.md v2.12.3 (2025-10-17): 'Starting in 2.12.0, using class methods for after model validators raised an error ... We decided to emit a deprecation warning instead.' changeDate is 2.12.0 (2025-10-07), when the old form stopped being accepted. In 2.14.1 it runs with a warning.",
+    "samples": {
+      "wrong": [
+        "from datetime import date\nfrom pydantic import BaseModel, model_validator\nclass DateRange(BaseModel):\n    start: date\n    end: date\n    @model_validator(mode='after')\n    @classmethod\n    def check(cls, m):\n        if m.end < m.start:\n            raise ValueError('bad')\n        return m",
+        "from datetime import date\nimport pydantic\nclass DateRange(pydantic.BaseModel):\n    start: date\n    end: date\n    @pydantic.model_validator(mode=\"after\")\n    @classmethod\n    def check(cls, value):\n        assert value.end >= value.start\n        return value",
+        "class DateRange(BaseModel):\n    start: date\n    end: date\n    @model_validator( mode = 'after' )\n    @classmethod\n    def ok(cls, v, info):\n        return v"
+      ],
+      "right": [
+        "from datetime import date\nfrom typing import Self\nfrom pydantic import BaseModel, model_validator\nclass DateRange(BaseModel):\n    start: date\n    end: date\n    @model_validator(mode='after')\n    def check(self) -> Self:\n        if self.end < self.start:\n            raise ValueError('bad')\n        return self",
+        "from datetime import date\nimport pydantic\nclass DateRange(pydantic.BaseModel):\n    start: date\n    end: date\n    @pydantic.model_validator(mode=\"after\")\n    def check(self):\n        assert self.end >= self.start\n        return self",
+        "class DateRange(BaseModel):\n    start: date\n    end: date\n    @model_validator( mode = 'after' )\n    def ok(self, info):\n        return self"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "pypi-langchain-tool-emulator-model",
+    "kind": "pypi",
+    "name": "langchain",
+    "installSpec": "1.4.6",
+    "language": "py",
+    "changeDate": "2026-08-11",
+    "sourceUrl": "https://github.com/langchain-ai/langchain/pull/39290",
+    "change": "LangChain deprecated relying on LLMToolEmulator's implicit default model; the model must be passed explicitly.",
+    "rule": "Always pass model explicitly when constructing LLMToolEmulator; relying on its default model is deprecated.",
+    "task": "Build a LangChain agent for integration tests with `get_weather` and `search_db` tools, where tool calls are answered by an LLM instead of really running, using LangChain's built-in middleware for this.",
+    "outputFile": "task.py",
+    "wrongPattern": "\\bLLMToolEmulator\\s*\\((?:(?!\\bmodel\\s*=)[^)])*\\)",
+    "rightPattern": "\\bLLMToolEmulator\\s*\\([^)]*\\bmodel\\s*=",
+    "verified": "langchain==1.4.6 wheel agents/middleware/tool_emulator.py: `__init__(self, *, tools=None, model=None)`, DeprecationWarning that the default model 'is deprecated and will be removed in a future release. Pass model explicitly instead.' Warning absent in 1.3.14, present in 1.3.15 (PyPI 2026-08-11). Vendor PR #39290 and release langchain==1.3.15 record it, but the release note title does not use the word 'deprecate'.",
+    "dependencyPins": {
+      "langchain-anthropic": "1.7.6"
+    },
+    "samples": {
+      "wrong": [
+        "from langchain.agents import create_agent\nfrom langchain.agents.middleware import LLMToolEmulator\nagent = create_agent(model='anthropic:claude-sonnet-5-5', tools=[get_weather, search_db], middleware=[LLMToolEmulator()])",
+        "from langchain.agents.middleware import LLMToolEmulator\nmw = LLMToolEmulator(tools=['get_weather', 'search_db'])",
+        "from langchain.agents.middleware import LLMToolEmulator\nagent = create_agent(model='openai:gpt-6-luna', tools=tools, middleware=[LLMToolEmulator( )])"
+      ],
+      "right": [
+        "from langchain.agents import create_agent\nfrom langchain.agents.middleware import LLMToolEmulator\nagent = create_agent(model='anthropic:claude-sonnet-5-5', tools=[get_weather, search_db], middleware=[LLMToolEmulator(model='anthropic:claude-haiku-5-5')])",
+        "from langchain.agents.middleware import LLMToolEmulator\nmw = LLMToolEmulator(tools=['get_weather', 'search_db'], model='openai:gpt-6-luna')",
+        "from langchain.agents.middleware import LLMToolEmulator\nmw = LLMToolEmulator(\n    model=my_chat_model,\n)"
+      ]
+    }
+  },
+  {
+    "id": "pypi-fastapi-json-schema-extra",
+    "kind": "pypi",
+    "name": "fastapi",
+    "installSpec": "0.156.4",
+    "language": "py",
+    "changeDate": "2026-10-20",
+    "sourceUrl": "https://fastapi.tiangolo.com/release-notes/#01550-2026-10-20",
+    "change": "FastAPI 0.155.0 removed arbitrary extra keyword arguments from Path, Query, Header, Cookie, Body, Form and File, so custom schema properties must go in json_schema_extra.",
+    "rule": "Put custom JSON Schema properties in json_schema_extra on Query and similar parameters; unknown keyword arguments now raise TypeError.",
+    "task": "Write a FastAPI app with `GET /users` taking an optional `email` query parameter, and set the custom OpenAPI schema property `pii` to true on that parameter.",
+    "outputFile": "task.py",
+    "wrongPattern": "\\bQuery\\s*\\((?:(?!json_schema_extra)[^)])*(?:\\bpii\\s*=|\\*\\*\\s*\\{\\s*['\\\"]pii)",
+    "rightPattern": "\\bjson_schema_extra\\s*=\\s*\\{[^}]*['\\\"]pii['\\\"]",
+    "verified": "fastapi==0.156.4 wheel: `**extra` no longer appears in fastapi/param_functions.py or params.py; `json_schema_extra` is a named parameter (14 hits). Release notes 0.155.0 (2026-10-20): deprecated **extra removed, unknown keyword arguments raise TypeError, use json_schema_extra.",
+    "samples": {
+      "wrong": [
+        "from fastapi import FastAPI, Query\napp = FastAPI()\n@app.get('/users')\ndef users(email: str | None = Query(None, pii=True)):\n    return []",
+        "from typing import Annotated\nfrom fastapi import FastAPI, Query\napp = FastAPI()\n@app.get('/users')\ndef users(email: Annotated[str | None, Query(pii=True)] = None):\n    return []",
+        "from fastapi import FastAPI, Query\napp = FastAPI()\n@app.get('/users')\ndef users(email: str | None = Query(default=None, **{'pii': True})):\n    return []"
+      ],
+      "right": [
+        "from fastapi import FastAPI, Query\napp = FastAPI()\n@app.get('/users')\ndef users(email: str | None = Query(None, json_schema_extra={'pii': True})):\n    return []",
+        "from typing import Annotated\nfrom fastapi import FastAPI, Query\napp = FastAPI()\n@app.get('/users')\ndef users(email: Annotated[str | None, Query(json_schema_extra={\"pii\": True})] = None):\n    return []",
+        "from fastapi import FastAPI, Query\napp = FastAPI()\n@app.get('/users')\ndef users(email: str | None = Query(\n    default=None,\n    json_schema_extra={'pii': True},\n)):\n    return []"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "http-stripe-checkout-allowed-payment-method-types",
+    "kind": "http",
+    "name": "Stripe",
+    "installSpec": null,
+    "language": "ts",
+    "changeDate": "2026-09-30",
+    "sourceUrl": "https://docs.stripe.com/changelog/endive/2026-09-30/remove-payment-method-types-checkout-sessions",
+    "change": "Stripe API version 2026-09-30.endive removed payment_method_types from Checkout Session creation (requests get a 400) and added allowed_payment_method_types; older pinned API versions keep the old parameter.",
+    "rule": "When creating Checkout Sessions, restrict methods with allowed_payment_method_types; payment_method_types now returns a 400 error.",
+    "task": "Write a TypeScript function using fetch against Stripe's REST API (no SDK) that creates a hosted Checkout Session for a one-time $20 payment and allows customers to pay by card only.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "(?<![a-z_])payment_method_types",
+    "rightPattern": "\\ballowed_payment_method_types\\b",
+    "verified": "Stripe changelog entry (category 'Breaking'): 'Passing payment_method_types ... now returns a 400 error'; REST table lists allowed_payment_method_types Added and payment_method_types Removed on Checkout.Session#create. No breaking rows in 2026-10-28.endive; 2026-10-28.preview ignored as not stable.",
+    "samples": {
+      "wrong": [
+        "const body = new URLSearchParams({ mode: 'payment', 'payment_method_types[0]': 'card', 'line_items[0][price]': 'price_1', 'line_items[0][quantity]': '1' })\nawait fetch('https://api.stripe.com/v1/checkout/sessions', { method: 'POST', headers, body })",
+        "const params = new URLSearchParams()\nparams.append('payment_method_types[]', 'card')\nawait fetch('https://api.stripe.com/v1/checkout/sessions', { method: 'POST', headers, body: params })",
+        "const form = `mode=payment&payment_method_types[0]=card&success_url=${url}`\nawait fetch('https://api.stripe.com/v1/checkout/sessions', { method: 'POST', headers, body: form })"
+      ],
+      "right": [
+        "const body = new URLSearchParams({ mode: 'payment', 'allowed_payment_method_types[0]': 'card', 'line_items[0][price]': 'price_1', 'line_items[0][quantity]': '1' })\nawait fetch('https://api.stripe.com/v1/checkout/sessions', { method: 'POST', headers, body })",
+        "const params = new URLSearchParams()\nparams.append('allowed_payment_method_types[]', 'card')\nawait fetch('https://api.stripe.com/v1/checkout/sessions', { method: 'POST', headers, body: params })",
+        "const form = `mode=payment&allowed_payment_method_types[0]=card&success_url=${url}`\nawait fetch('https://api.stripe.com/v1/checkout/sessions', { method: 'POST', headers, body: form })"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "http-openai-gpt4-series-retirement",
+    "kind": "http",
+    "name": "OpenAI",
+    "installSpec": null,
+    "language": "ts",
+    "changeDate": "2026-10-14",
+    "sourceUrl": "https://developers.openai.com/api/docs/deprecations",
+    "change": "OpenAI deprecated GPT-4o, GPT-4o mini, GPT-4.1 and GPT-4.1 mini snapshots, with removal from the API on January 14, 2027 and gpt-6-luna as the recommended replacement.",
+    "rule": "Use gpt-6-luna instead of gpt-4o, gpt-4o-mini, gpt-4.1 or gpt-4.1-mini, which are deprecated and shut down in January 2027.",
+    "task": "Write a TypeScript function using fetch against OpenAI's REST API (no SDK) that returns a one-sentence summary of some text, with a small, fast, general-purpose model hardcoded as a constant.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "['\"\\x60]gpt-4(?:o|o-mini|\\.1|\\.1-mini)(?:-\\d{4}-\\d{2}-\\d{2})?['\"\\x60]",
+    "rightPattern": "['\"\\x60]gpt-6-luna(?:-[\\w.-]+)?['\"\\x60]",
+    "verified": "OpenAI deprecations page, entry '2026-10-14: GPT-4 series model deprecations': shutdown January 14, 2027 for gpt-4o-2024-08-06, gpt-4o-2024-11-20, gpt-4o-mini-2024-07-18, gpt-4.1-2025-04-14, gpt-4.1-mini-2025-04-14; recommended replacement gpt-6-luna. The page names dated snapshots; undated aliases are treated as wrong by inference.",
+    "samples": {
+      "wrong": [
+        "const MODEL = 'gpt-4o-mini'\nexport const summarize = (input: string) => fetch('https://api.openai.com/v1/responses', { method: 'POST', headers, body: JSON.stringify({ model: MODEL, input }) })",
+        "const MODEL = \"gpt-4.1-mini\"\nexport const summarize = (input: string) => fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers, body: JSON.stringify({ model: MODEL, messages: [] }) })",
+        "const MODEL = 'gpt-4o-2024-08-06'\nexport const f = () => MODEL"
+      ],
+      "right": [
+        "const MODEL = 'gpt-6-luna'\nexport const summarize = (input: string) => fetch('https://api.openai.com/v1/responses', { method: 'POST', headers, body: JSON.stringify({ model: MODEL, input }) })",
+        "const MODEL = \"gpt-6-luna\"\nexport const summarize = (input: string) => fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers, body: JSON.stringify({ model: MODEL, messages: [] }) })",
+        "const MODEL = `gpt-6-luna`\nexport const f = () => MODEL"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "http-github-rate-limit-resources-core",
+    "kind": "http",
+    "name": "GitHub REST",
+    "installSpec": null,
+    "language": "ts",
+    "changeDate": "2026-03-10",
+    "sourceUrl": "https://docs.github.com/en/rest/about-the-rest-api/breaking-changes#version-2026-03-10",
+    "change": "GitHub REST API version 2026-03-10 removed the deprecated rate property from GET /rate_limit in favor of resources.core; the previous API version remains callable.",
+    "rule": "Read GET /rate_limit data from resources.core; the top-level rate property is removed in current API versions.",
+    "task": "Write a TypeScript function using fetch against GitHub's REST API (no SDK) that reads the JSON from its rate limit endpoint and returns how many regular, non-search requests my token has left and when that allowance resets.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\.rate\\s*\\.\\s*(?:remaining|limit|reset|used)\\b|\\{\\s*rate\\s*\\}|\\[['\\\"]rate['\\\"]\\]",
+    "rightPattern": "\\bresources\\??\\s*\\.\\s*core\\b|\\[['\\\"]core['\\\"]\\]",
+    "verified": "GitHub docs breaking-changes page, section 'Version 2026-03-10' (marked latest): 'Remove deprecated rate property from rate limit endpoint ... read rate limit information from resources.core instead'; affected endpoint GET /rate_limit. First entry in the section.",
+    "samples": {
+      "wrong": [
+        "export async function left(token: string) {\n  const d = await (await fetch('https://api.github.com/rate_limit', { headers: { Authorization: `Bearer ${token}` } })).json()\n  return { remaining: d.rate.remaining, reset: d.rate.reset }\n}",
+        "export async function left() {\n  const res = await fetch('https://api.github.com/rate_limit')\n  const { rate } = await res.json()\n  return rate\n}",
+        "export async function left() {\n  const d = await (await fetch('https://api.github.com/rate_limit')).json()\n  return d['rate']\n}"
+      ],
+      "right": [
+        "export async function left(token: string) {\n  const d = await (await fetch('https://api.github.com/rate_limit', { headers: { Authorization: `Bearer ${token}` } })).json()\n  return { remaining: d.resources.core.remaining, reset: d.resources.core.reset }\n}",
+        "export async function left() {\n  const res = await fetch('https://api.github.com/rate_limit')\n  const { resources } = await res.json()\n  return resources.core\n}",
+        "export async function left() {\n  const d = await (await fetch('https://api.github.com/rate_limit')).json()\n  return d.resources['core']\n}"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "http-slack-agents-sessions-setstatus",
+    "kind": "http",
+    "name": "Slack",
+    "installSpec": null,
+    "language": "ts",
+    "changeDate": "2026-08-20",
+    "sourceUrl": "https://docs.slack.dev/changelog",
+    "change": "Slack announced that the Agent Sessions API replaces the assistant methods, with agents.sessions.setStatus replacing assistant.threads.setStatus and assistant_view being deprecated in February 2027.",
+    "rule": "Set agent loading status with agents.sessions.setStatus; assistant.threads.setStatus is being replaced and works only through a compatibility bridge.",
+    "task": "Write a TypeScript function using fetch against Slack's Web API (no SDK) that shows a 'Thinking...' status on a user's thread with my AI agent while it prepares a reply, given the channel ID and thread timestamp.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\bassistant\\.threads\\.setStatus\\b",
+    "rightPattern": "\\bagents\\.sessions\\.setStatus\\b",
+    "verified": "Slack changelog entry dated August 20, 2026 ('The next wave of Agent messaging experience', tagged Deprecation): 'agents.sessions.setStatus and agents.sessions.rename ... replace assistant.threads.setStatus and assistant.threads.setTitle'; old calls keep working through a compatibility bridge. docs.slack.dev/reference/methods/agents.sessions.setStatus exists and says it replaces assistant.threads.setStatus.",
+    "samples": {
+      "wrong": [
+        "export const think = (channel_id: string, thread_ts: string) => fetch('https://slack.com/api/assistant.threads.setStatus', { method: 'POST', headers, body: JSON.stringify({ channel_id, thread_ts, status: 'Thinking...' }) })",
+        "const METHOD = 'assistant.threads.setStatus'\nexport const think = (body: string) => fetch(`https://slack.com/api/${METHOD}`, { method: 'POST', headers, body })",
+        "export async function think(channel: string, ts: string) {\n  const url = 'https://slack.com/api/assistant.threads.setStatus'\n  return fetch(url, { method: 'POST', headers, body: JSON.stringify({ channel_id: channel, thread_ts: ts, status: 'Thinking...' }) })\n}"
+      ],
+      "right": [
+        "export const think = (channel_id: string, thread_ts: string) => fetch('https://slack.com/api/agents.sessions.setStatus', { method: 'POST', headers, body: JSON.stringify({ channel_id, thread_ts, status: 'thinking' }) })",
+        "const METHOD = 'agents.sessions.setStatus'\nexport const think = (body: string) => fetch(`https://slack.com/api/${METHOD}`, { method: 'POST', headers, body })",
+        "export async function think(channel: string, ts: string) {\n  const url = 'https://slack.com/api/agents.sessions.setStatus'\n  return fetch(url, { method: 'POST', headers, body: JSON.stringify({ channel_id: channel, thread_ts: ts, status: 'thinking' }) })\n}"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "http-anthropic-adaptive-thinking",
+    "kind": "http",
+    "name": "Anthropic",
+    "installSpec": null,
+    "language": "ts",
+    "changeDate": "2026-10-07",
+    "sourceUrl": "https://platform.claude.com/docs/en/models/haiku-5-5/migration-guide#configure-thinking",
+    "change": "On Claude Haiku 5.5, launched 2026-10-07, thinking with type enabled and budget_tokens returns a 400 error and must be replaced by adaptive thinking.",
+    "rule": "Enable Claude thinking with thinking type adaptive and control depth with output_config effort; never send budget_tokens.",
+    "task": "Write a TypeScript function using fetch against Anthropic's Messages API (no SDK) that asks Claude's current Haiku model a hard question with model reasoning turned on, and returns only the final answer text.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "\\bbudget_tokens\\b",
+    "rightPattern": "\\btype['\\\"]?\\s*:\\s*['\\\"]adaptive['\\\"]",
+    "verified": "Claude Haiku 5.5 migration guide: '{\"type\": \"enabled\", \"budget_tokens\": N} returns a 400 error'; replacement thinking {\"type\": \"adaptive\"} with output_config.effort. Release notes October 7, 2026 list it. Older models such as Haiku 4.5 still accept budget_tokens, so this is model-specific.",
+    "samples": {
+      "wrong": [
+        "const body = { model: 'claude-haiku-4-5', max_tokens: 16000, thinking: { type: 'enabled', budget_tokens: 8000 }, messages: [{ role: 'user', content: q }] }\nawait fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers, body: JSON.stringify(body) })",
+        "const thinking = {\n  type: 'enabled',\n  budget_tokens: 4096,\n}\nawait fetch(url, { method: 'POST', headers, body: JSON.stringify({ model, thinking, messages }) })",
+        "const payload = JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: 2000, thinking: { \"type\": \"enabled\", \"budget_tokens\": 1024 }, messages })"
+      ],
+      "right": [
+        "const body = { model: 'claude-haiku-5-5', max_tokens: 16000, thinking: { type: 'adaptive' }, output_config: { effort: 'high' }, messages: [{ role: 'user', content: q }] }\nawait fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers, body: JSON.stringify(body) })",
+        "const thinking = {\n  type: 'adaptive',\n}\nawait fetch(url, { method: 'POST', headers, body: JSON.stringify({ model, thinking, messages }) })",
+        "const payload = JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: 2000, thinking: { \"type\": \"adaptive\", \"display\": \"summarized\" }, messages })"
+      ]
+    },
+    "dependencyPins": {}
+  },
+  {
+    "id": "http-twilio-conferences-status-filter",
+    "kind": "http",
+    "name": "Twilio",
+    "installSpec": null,
+    "language": "ts",
+    "changeDate": "2026-09-30",
+    "sourceUrl": "https://www.twilio.com/en-us/changelog/conference-list-endpoint-july-2026",
+    "change": "Twilio's Conferences list endpoint now returns only in-progress conferences when no Status filter is sent, so finished conferences require Status=completed.",
+    "rule": "Listing Twilio Conferences without Status returns only in-progress ones; send Status=completed in a separate request for finished conferences.",
+    "task": "Write a TypeScript function using fetch against Twilio's REST API (no SDK) that returns all the conferences on my account, both still running and already finished.",
+    "outputFile": "src/task.ts",
+    "wrongPattern": "^(?![\\s\\S]*\\bStatus\\b)[\\s\\S]*\\bConferences\\.json",
+    "rightPattern": "\\bStatus['\\\"]?\\s*[=:,]\\s*['\\\"\\x60]?completed\\b",
+    "verified": "Twilio changelog entry published September 23, 2026: GET /2010-04-01/Accounts/{AccountSid}/Conferences.json without a Status filter will default to in-progress conferences only, effective September 30, 2026; add Status=completed for completed conferences; both types need two requests. Docs not separately checked beyond the changelog.",
+    "samples": {
+      "wrong": [
+        "export const all = (sid: string) => fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Conferences.json`, { headers })",
+        "export async function all(sid: string) {\n  const url = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Conferences.json?PageSize=1000`\n  const r = await fetch(url, { headers })\n  return (await r.json()).conferences\n}",
+        "const base = 'https://api.twilio.com/2010-04-01/Accounts'\nexport const all = (sid: string) => fetch(base + '/' + sid + '/Conferences.json?DateCreatedAfter=2026-01-01', { headers })"
+      ],
+      "right": [
+        "export const all = async (sid: string) => {\n  const url = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Conferences.json`\n  const a = await fetch(`${url}?Status=in-progress`, { headers })\n  const b = await fetch(`${url}?Status=completed`, { headers })\n  return [a, b]\n}",
+        "const q = new URLSearchParams({ Status: 'completed', PageSize: '1000' })\nexport const done = (sid: string) => fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Conferences.json?${q}`, { headers })",
+        "const q = new URLSearchParams()\nq.append('Status', 'completed')\nexport const done = (sid: string) => fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Conferences.json?${q}`, { headers })"
+      ]
+    },
+    "dependencyPins": {}
+  }
+]

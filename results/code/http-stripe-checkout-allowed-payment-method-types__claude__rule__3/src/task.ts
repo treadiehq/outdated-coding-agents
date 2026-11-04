@@ -1,0 +1,39 @@
+export interface CheckoutSession {
+  id: string;
+  url: string | null;
+  [key: string]: unknown;
+}
+
+export async function createCheckoutSession(
+  secretKey: string,
+  successUrl: string,
+  cancelUrl: string,
+): Promise<CheckoutSession> {
+  const body = new URLSearchParams({
+    mode: "payment",
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    "allowed_payment_method_types[0]": "card",
+    "line_items[0][quantity]": "1",
+    "line_items[0][price_data][currency]": "usd",
+    "line_items[0][price_data][unit_amount]": "2000", // $20.00 in cents
+    "line_items[0][price_data][product_data][name]": "One-time payment",
+  });
+
+  const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+
+  const data = (await res.json()) as any;
+  if (!res.ok) {
+    throw new Error(
+      `Stripe error ${res.status}: ${data?.error?.message ?? JSON.stringify(data)}`,
+    );
+  }
+  return data as CheckoutSession;
+}
